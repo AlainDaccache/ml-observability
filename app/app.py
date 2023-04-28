@@ -5,7 +5,7 @@ import random
 
 import pandas as pd
 import numpy as np
-from flask import Flask, jsonify, request, make_response
+from flask import Flask, Response, jsonify, request, make_response
 from prometheus_client import Counter, Histogram, Gauge, generate_latest
 from sqlalchemy import create_engine, text
 from datetime import datetime, timedelta
@@ -190,4 +190,4 @@ def metrics():
     else:
         rmse_series = None
     
-    return generate_latest()
+    return Response(generate_latest(), mimetype="text/plain; version=0.0.4")
