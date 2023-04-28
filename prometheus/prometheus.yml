@@ -1,0 +1,20 @@
+global:
+  scrape_interval:      15s
+  evaluation_interval:  15s
+
+scrape_configs:
+  # optional: this makes the metrics available to us about Promethus itself.
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # tells Prometheus to scrape metrics an address over port 9123 (statsd-exporter)
+  - job_name: 'test_statsd_metrics'
+    static_configs:
+      - targets: ['host.docker.internal:9102']
+        labels: {'host': 'test_statsd_metrics'} # optional: just a way to identify the system exposing metrics
+
+  - job_name: 'test_ml_app'
+    static_configs:
+      - targets: ['host.docker.internal:5000']
+        labels: {'host': 'test_ml_app'}

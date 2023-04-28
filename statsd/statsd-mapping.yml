@@ -1,0 +1,14 @@
+mappings:
+    # usage: test_api_call.product-api.timer./v1/product
+  - match: "test_api_call.*.timer.*"
+    name: "test_api_call"
+    labels:
+        api_name: "$1"
+        api_endpoint: "$2"
+
+  - match: "helloworld.gunicorn.request.status.*"
+    help: "http response code"
+    name: "http_response_code"
+    labels:
+      status: "$1"
+      job: "helloworld_gunicorn_response_code"

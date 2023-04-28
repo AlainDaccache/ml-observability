@@ -1,0 +1,84 @@
+services:
+
+  ml-api:
+    build: ./app
+    container_name: ml-api
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydb
+      PROMETHEUS_SCRAPE_INTERVAL: 15 # in seconds
+    command: python manage.py run -h 0.0.0.0
+    volumes:
+      - ./app/:/usr/src/app/
+    ports:
+      - 5000:5000
+
+  prom-statsd-exporter:
+    image: prom/statsd-exporter
+    container_name: prom-statsd-exporter
+    ports:
+    - 8125:8125/udp
+    - 9102:9102
+    command:
+    - --statsd.mapping-config=/tmp/statsd-mapping.yml
+    - --statsd.listen-udp=:8125
+    - --web.listen-address=:9102
+    volumes:
+    - ./statsd/statsd-mapping.yml:/tmp/statsd-mapping.yml
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+    - 9090:9090
+    links:
+    - prom-statsd-exporter
+    volumes:
+    - ./prometheus/prometheus.yml:/prometheus.yml
+    command:
+    - --config.file=/prometheus.yml
+    - --log.level=debug
+    - --web.listen-address=:9090
+    - --web.page-title='Prometheus - Test Metrics Demo'
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    links:
+    - prometheus
+    ports:
+    - 3000:3000
+    # volumes:
+    #   - ./grafana/grafana-data:/var/lib/grafana
+    #   - ./grafana/grafana-conf:/etc/grafana
+    # environment:
+    #   GF_SECURITY_ADMIN_USER: admin
+    #   GF_SECURITY_ADMIN_PASSWORD: admin
+    # user: "1000"
+
+  jupyter:
+    image: jupyter/datascience-notebook:latest
+    container_name: jupyter
+    volumes:
+      - ./notebooks:/home/jovyan/work
+    ports:
+      - "8888:8888"
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - GRANT_SUDO=yes
+      - NB_UID=1000
+      - NB_GID=100
+    user: root
+
+  db:
+    image: postgres:13
+    container_name: db
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydb
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
